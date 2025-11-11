@@ -1,0 +1,21 @@
+{
+  "name": "AI-Powered-Notes-App",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "pnpm --filter home build",
+    "dev": "pnpm --parallel --filter web --filter server dev",
+    "start": "pnpm --parallel --filter web --filter server start",
+    "test": "pnpm --parallel --filter web --filter server test",
+    "coverage": "pnpm --parallel --filter web --filter server coverage",
+    "lint": "pnpm --parallel --filter web --filter server lint",
+    "check": "pnpm --filter server check && pnpm --filter web check",
+    "format": "pnpm --filter server format && pnpm --filter web format",
+    "postinstall": "pnpm --filter server install-py",
+    "activate": "pnpm --filter server activate"
+  },
+  "keywords": [],
+  "author": "Mohd Aman, Mayank Agarwal, Mohit Goyal",
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0"
+}

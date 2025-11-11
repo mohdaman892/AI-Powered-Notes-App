@@ -1,0 +1,16 @@
+{
+  "name": "server",
+  "scripts": {
+    "dev": "python app/main.py 1",
+    "start": "python app/main.py",
+    "lint": "pylint .",
+    "format": "black . && isort . --profile=black",
+    "test": "pytest",
+    "coverage": "pytest --cov=app tests/",
+    "check": "black --check . && isort --check-only . --profile=black",
+    "install-py": "poetry install",
+    "activate": "poetry shell",
+    "add-py": "poetry add",
+    "remove-py": "poetry remove"
+  }
+}
