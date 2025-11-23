@@ -31,7 +31,6 @@ async def test_setup(
 
         String Response.
     """
-    print(config.ENV)
 
     return SetupController().print_hello_world()
 
