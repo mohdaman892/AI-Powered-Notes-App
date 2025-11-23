@@ -6,7 +6,7 @@ including shared columns and table naming conventions.
 """
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict
 from uuid import UUID, uuid4
@@ -33,18 +33,18 @@ class Base(DeclarativeBase):
         table_name = re.sub("(?<!^)(?=[A-Z])", "_", self.__name__).lower()
         return table_name
 
-    id: Mapped[UUID] = mapped_column(
-        CHAR(36), primary_key=True, default=lambda: uuid4()
+    id: Mapped[str] = mapped_column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid4())
     )
     is_active: Mapped[bool] = mapped_column(BOOLEAN, default=True)
     is_deleted: Mapped[bool] = mapped_column(BOOLEAN, default=False)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
-        default=datetime.now(timezone.utc),
+        default=datetime.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
-        default=datetime.now(timezone.utc),
+        default=datetime.now(),
     )
     created_by: Mapped[str] = mapped_column(VARCHAR(100))
     updated_by: Mapped[str] = mapped_column(VARCHAR(100))
