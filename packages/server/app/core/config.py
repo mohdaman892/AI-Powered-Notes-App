@@ -16,6 +16,7 @@ class Config(BaseSettings):
     """
 
     ENV: str = cast(str, os.getenv("ENV", "development"))
+    POSTGRES_CONNECTION_URL:str = cast(str, os.getenv("POSTGRES_CONNECTION_URL", ""))
 
     class Config:
         """

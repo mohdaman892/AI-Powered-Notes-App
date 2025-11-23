@@ -1,1 +1,11 @@
 /packages/server/poetry.lock
+/packages/server/.env
+/packages/server/*/*/__pycache__
+/packages/server/*/*/*/__pycache__
+/packages/server/*/__pycache__
+/packages/server/*/*/__pycache__
+/packages/server/*/*/*/*/__pycache__
+node_modules/
+.idea/
+pnpm-lock.yaml
+

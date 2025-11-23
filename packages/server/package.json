@@ -8,7 +8,7 @@
     "test": "pytest",
     "coverage": "pytest --cov=app tests/",
     "check": "black --check . && isort --check-only . --profile=black",
-    "install-py": "poetry install",
+    "install-py": "poetry install --no-root",
     "activate": "poetry shell",
     "add-py": "poetry add",
     "remove-py": "poetry remove"
