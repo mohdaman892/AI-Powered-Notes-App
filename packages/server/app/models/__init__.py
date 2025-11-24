@@ -6,3 +6,6 @@ These models define the schema for the application's database tables.
 """
 
 from .base import Base as Base
+from .user import User as User
+from .note import Note as Note
+from .multimedia import Multimedia as Multimedia
