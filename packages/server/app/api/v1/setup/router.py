@@ -8,12 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import (
     APIRouter,
     Depends,
-    Request,
+    Request
 )
-from schemas import BaseResponse
 
 setup_router = APIRouter(prefix="/setup")
-
 
 @setup_router.get("")
 async def test_setup(
@@ -33,5 +31,4 @@ async def test_setup(
     """
 
     return SetupController().print_hello_world()
-
 
