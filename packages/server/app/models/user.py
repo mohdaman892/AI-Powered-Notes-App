@@ -2,6 +2,7 @@ from enum import Enum
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import VARCHAR
+from passlib.context import CryptContext
 
 from app.models.base import Base
 
@@ -12,6 +13,10 @@ class Role(str, Enum):
 
 
 class User(Base):
+
+
+    pwd_context = CryptContext(schemes=["argon2"])
+
     """
     Represents a user in the system.
     Inherits audit + id fields from Base.
@@ -43,11 +48,11 @@ class User(Base):
 
     @password.setter
     def password(self, raw_password: str):
-        # TODO: hash inside this setter
-        self._password = raw_password
 
+        self._password = self.pwd_context.hash(raw_password)
 
-
+    def verify_password(self, raw_password: str) -> bool:
+        return self.pwd_context.verify(raw_password, self._password)
 
     # notes: Mapped[list["Note"]] = relationship(
     #     back_populates="user",
