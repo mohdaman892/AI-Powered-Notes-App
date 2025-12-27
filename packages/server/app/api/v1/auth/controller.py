@@ -5,6 +5,8 @@ from schemas import SignupSchema
 from models import User
 from crud import BaseCrud
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import JSONResponse
+from utils import token
 
 class AuthController:
 
@@ -12,13 +14,13 @@ class AuthController:
     def print_hello_world():
         return "Hello World!"
 
-    async def user_verify(self, data: SignupSchema, session: AsyncSession):
+    async def user_verify(self, data: SignupSchema, session: AsyncSession) -> str:
         user_details = BaseCrud(User)
         user_object: list = await user_details.get(session, "email", data.email)
         user = None
         # print(user_objects.to_dict())
         if(user_object.verify_password(data.password)):
-         return user_object.id
+            return await token.create_auth_token(user_object.id)
         else:
             return None
             # user = user_object

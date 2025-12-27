@@ -8,7 +8,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1 import api_v1_router
-from core import setup_logger
+from core import setup_logger, CustomMiddleware
 
 origins = [
     "http://localhost:3000",
@@ -28,6 +28,7 @@ app = FastAPI(
 
 setup_logger()
 
+app.add_middleware(CustomMiddleware)
 app.include_router(api_v1_router)
 
 app.add_middleware(
