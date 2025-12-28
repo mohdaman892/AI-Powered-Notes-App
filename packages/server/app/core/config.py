@@ -18,6 +18,8 @@ class Config(BaseSettings):
     ENV: str = cast(str, os.getenv("ENV", "development"))
     POSTGRES_CONNECTION_URL:str = cast(str, os.getenv("POSTGRES_CONNECTION_URL", ""))
     SECRET_KEY:str = cast(str, os.getenv("SECRET_KEY", ""))
+    ACCESS_TOKEN_EXPIRY_MINUTES: int = cast(int, os.getenv("ACCESS_TOKEN_EXPIRY_MINUTES",0))
+    JWT_ALGORITHM: str = cast(int, os.getenv("JWT_ALGORITHM",""))
 
     class Config:
         """

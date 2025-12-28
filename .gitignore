@@ -1,5 +1,4 @@
 /packages/server/poetry.lock
-/packages/server/.env
 /packages/server/*/*/__pycache__
 /packages/server/*/*/*/__pycache__
 /packages/server/*/__pycache__
