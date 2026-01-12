@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TEXT
 
-from app.models.base import Base
+from .base import Base
 
 
 class Note(Base):
@@ -36,4 +36,3 @@ class Note(Base):
     #     back_populates="note",
     #     cascade="all, delete-orphan",
     # )
-

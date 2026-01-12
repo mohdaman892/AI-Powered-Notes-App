@@ -11,10 +11,10 @@ from enum import Enum
 from typing import Any, Dict
 from uuid import UUID, uuid4
 
+from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import BOOLEAN, CHAR, TIMESTAMP, VARCHAR
-from sqlalchemy import MetaData
 
 
 class Base(DeclarativeBase):
@@ -24,6 +24,7 @@ class Base(DeclarativeBase):
     This class includes shared attributes and functionality that are inherited
     by all other models in the application.
     """
+
     metadata = MetaData(schema="ai-powered-notes-app")
 
     @declared_attr.directive

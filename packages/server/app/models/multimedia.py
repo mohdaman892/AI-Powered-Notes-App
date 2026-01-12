@@ -2,9 +2,9 @@ from typing import List, Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.types import VARCHAR, JSON
+from sqlalchemy.types import JSON, VARCHAR
 
-from app.models.base import Base
+from .base import Base
 
 
 class Multimedia(Base):

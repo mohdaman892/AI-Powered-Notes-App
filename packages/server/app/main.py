@@ -5,10 +5,13 @@ This module contains the FastAPI application for the server.
 import sys
 
 import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from api.v1 import api_v1_router
-from core import setup_logger, CustomMiddleware
+from core import (CustomMiddleware, generic_exception, http_exception,
+                  setup_logger, validation_exception)
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 origins = [
     "http://localhost:3000",
@@ -29,6 +32,11 @@ app = FastAPI(
 setup_logger()
 
 app.add_middleware(CustomMiddleware)
+
+app.add_exception_handler(StarletteHTTPException, http_exception)
+app.add_exception_handler(RequestValidationError, validation_exception)
+app.add_exception_handler(Exception, generic_exception)
+
 app.include_router(api_v1_router)
 
 app.add_middleware(
@@ -38,8 +46,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import logging
 
+
 def setup_logger():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)  # or DEBUG
@@ -11,8 +12,7 @@ def setup_logger():
     console_handler.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] [%(name)s] → %(message)s",
-        "%Y-%m-%d %H:%M:%S"
+        "[%(asctime)s] [%(levelname)s] [%(name)s] → %(message)s", "%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
 

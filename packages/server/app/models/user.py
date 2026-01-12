@@ -1,10 +1,10 @@
 from enum import Enum
 
+from passlib.context import CryptContext
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import VARCHAR
-from passlib.context import CryptContext
 
-from app.models.base import Base
+from .base import Base
 
 
 class Role(str, Enum):
@@ -13,7 +13,6 @@ class Role(str, Enum):
 
 
 class User(Base):
-
 
     pwd_context = CryptContext(schemes=["argon2"])
 

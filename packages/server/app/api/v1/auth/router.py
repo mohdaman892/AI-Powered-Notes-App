@@ -1,46 +1,77 @@
 """
-This module defines the routes for Setup of the FastAPI App.
+This module defines the routes for Auth Service of the FastAPI App.
 """
-from http.client import HTTPException
 
 from api.v1.auth.controller import AuthController
-from core import get_session, config, response_func
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    Response
-)
-from fastapi.responses import JSONResponse
+from core import Response, config, get_session
+from fastapi import APIRouter, Depends
 from schemas import BaseResponse, SignupSchema
-from crud import BaseCrud
-from models import User
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 auth_router = APIRouter(prefix="/auth")
 
-control_obj = AuthController()
+
+@auth_router.post("/login", response_model=BaseResponse)
+async def login(data: SignupSchema, session: AsyncSession = Depends(get_session)):
+    """
+
+    Router method for Login of any user.
+
+    Args:
+
+        data: Payload containing the user sing-in data.
+        session: Async DB session.
+
+    Returns:
+
+        HTTP Response containing success message and cookies.
+    """
+    response, cookies = await AuthController().user_verify(data, session)
+    return Response.success(
+        message="User Logged-In Successfully.",
+        status_code=200,
+        body=response,
+        cookies=cookies,
+    )
 
 
-@auth_router.post("/login")
-async def login(response: Response, data: SignupSchema, session: AsyncSession = Depends(get_session)) -> BaseResponse:
-    token = await control_obj.user_verify(data, session)
-    if(token is not None):
-        return await response_func.success_response(response,token)
-        # user = user_object
-    else:
-        raise await response_func.failed_response
+@auth_router.post("/logout", response_model=BaseResponse)
+async def logout():
+    """
 
-@auth_router.post("/signup")
-async def signup(data: SignupSchema, session: AsyncSession = Depends(get_session)) -> BaseResponse:
+    Router method for Log-out of any user.
 
-    await control_obj.add_user(data, session)
+    Returns:
 
-    return await response_func.success_response()
+        HTTP Response containing success message and no cookies
+    """
+    response = Response.success(message="Signed out successfully.")
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+    return response
 
 
+@auth_router.post("/signup", response_model=BaseResponse)
+async def signup(data: SignupSchema, session: AsyncSession = Depends(get_session)):
+    """
 
+    Router method for creating a new user.
 
+    Args:
 
+        data: Payload containing the user sing-up data.
+        session: Async DB session.
 
+    Returns:
+
+        HTTP Response containing success message and user_id.
+    """
+
+    response = await AuthController().add_user(data, session)
+    return Response.success(
+        message="User Sign-Up was Successful.", status_code=200, body=response
+    )

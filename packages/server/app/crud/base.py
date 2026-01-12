@@ -6,53 +6,169 @@ and deleting records in the database, with support for soft deletion.
 The `BaseCrud` class is designed to work with any model that inherits from the `Base`
 class and includes an `is_deleted` field for soft deletion.
 """
-import logging
 
+from typing import Any, Dict, Generic, List, Type, TypeVar, Union
+
+from core import setup_logger
+from fastapi.encoders import jsonable_encoder
+from models import Base
+from pydantic import BaseModel
+from sqlalchemy import Column, false, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Any
+
+logger = setup_logger()
+
+ModelType = TypeVar("ModelType", bound=Base)
+CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
+UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
-logger = logging.getLogger(__name__)
+class BaseCrud(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """
+    A generic CRUD class that provides common database operations for any model.
+    Attributes:
+        model: The SQLAlchemy model class to perform operations on.
+    Methods:
+        get: Retrieve a single record by a specific field and value.
+        get_multi: Retrieve multiple records with optional pagination.
+        create: Create a new record in the database.
+        update: Update an existing record in the database.
+        delete: Soft delete a record by setting `is_deleted` to False.
+    """
 
-class BaseCrud:
+    def __init__(self, *, model: Type[ModelType]):
+        """
+        Initializes the BaseCrud instance with the specified model.
 
-    def __init__(self,model_type):
-        self.model_type = model_type
+        Args:
+            model: The SQLAlchemy model class to perform operations on.
+        """
+        self.model = model
 
-    async def insert(self, session: AsyncSession, in_obj) -> Any:
-        session.add(in_obj)
+    async def get(
+        self, *, session: AsyncSession, field: Column, value: Any
+    ) -> ModelType | None:
+        """
+        Retrieve a single record by a specific field and value, ensuring `is_deleted` is False.
+        Args:
+            session: The database session.
+            field: The column to filter by.
+            value: The value to filter by.
+        Returns:
+            ModelType | None: The retrieved record, or None if not found.
+        """
+        logger.info("Inside basecrud, executing get ...")
+        if hasattr(value, "hex"):
+            value = str(value)
+        query = (
+            select(self.model)
+            .where(field == value, self.model.is_deleted.is_(false()))
+            .order_by(self.model.updated_at.desc())
+            .limit(1)
+        )
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    async def get_multi(
+        self, *, session: AsyncSession, skip: int = 0, limit: int = 10
+    ) -> List[ModelType] | list:
+        """
+        Retrieve multiple records with optional pagination, ensuring `is_deleted` is False.
+        Args:
+            session: The database session.
+            skip: The number of records to skip (default: 0).
+            limit: The maximum number of records to retrieve (default: 10).
+        Returns:
+            List[ModelType] | list: A list of retrieved records.
+        """
+        logger.info("Inside basecrud, executing get_multi ...")
+        query = (
+            select(self.model)
+            .where(self.model.is_deleted.is_(false()))
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    async def insert(
+        self,
+        *,
+        session: AsyncSession,
+        create_obj: Union[CreateSchemaType, Dict],
+        unique_identifier: str,
+    ) -> ModelType:
+        """
+        Create a new record in the database.
+        Args:
+            session: The database session.
+            create_obj: The data for the new record.
+            unique_identifier: user's unique identifier.
+        Returns:
+            ModelType: The created record.
+        """
+        logger.info("Inside basecrud, executing create ...")
+        obj_in_data = jsonable_encoder(create_obj)
+        obj_in_data["created_by"] = unique_identifier
+        obj_in_data["updated_by"] = unique_identifier
+        db_obj = self.model(**obj_in_data)
+        session.add(db_obj)
         await session.commit()
-        logger.info(f"Record inserted for id {id}")
+        await session.refresh(db_obj)
+        return db_obj
 
-        return in_obj
+    async def update(
+        self,
+        *,
+        session: AsyncSession,
+        db_obj: ModelType,
+        obj_in: UpdateSchemaType,
+        unique_identifier: str,
+    ) -> ModelType:
+        """
+        Update an existing record in the database.
+        Args:
+            session: The database session.
+            db_obj: The existing record to update.
+            obj_in: The updated data.
+            unique_identifier: user's unique identifier.
+        Returns:
+            ModelType: The updated record.
+        """
+        logger.info("Inside basecrud, executing update ...")
+        obj_data = jsonable_encoder(db_obj)
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump()
 
-    async def update(self, session: AsyncSession, old_object, new_object: dict) -> Any:
-        model_columns = [col.name for col in self.model_type.__table__.columns]
-        for key, value in new_object.items():
-            if key in model_columns:
-                setattr(old_object, key, value)
+        logger.info(f"Update data: {update_data}")
+        for field in obj_data:
+            if field in update_data:
+                setattr(db_obj, field, update_data[field])
+
+        setattr(db_obj, "updated_by", unique_identifier)
+        session.add(db_obj)
         await session.commit()
-        await session.refresh(old_object)
-        logger.info(f"Record updated for id {new_object.get("id")}")
-        return old_object
+        await session.refresh(db_obj)
+        return db_obj
 
-    async def get(self, session: AsyncSession, column_name: str, value:str) -> list[Any]:
-        column = getattr(self.model_type, column_name)
-        is_deleted = getattr(self.model_type, "is_deleted")
-        fetched_objects = (await session
-                               .execute(select(self.model_type)
-                               .where(column == value and is_deleted == False)))
-
-        return fetched_objects.scalars().first()
-
-    async def delete(self, session: AsyncSession, db_object):
-        setattr(db_object, "is_deleted", True)
+    async def delete(
+        self, *, session: AsyncSession, db_obj: ModelType, unique_identifier: str
+    ) -> ModelType:
+        """
+        Soft delete a record by setting `is_deleted` to True.
+        Args:
+            session: The database session.
+            db_obj: The record to delete.
+            unique_identifier: user's unique identifier.
+        Returns:
+            ModelType: The soft-deleted record.
+        """
+        logger.info("Inside basecrud, executing delete ...")
+        db_obj.is_deleted = True
+        db_obj.updated_by = unique_identifier
+        session.add(db_obj)
         await session.commit()
-        logger.info(f"Record deleted for id {id}")
-
-
-    async def get_multi(self, session: AsyncSession, offset:int, limit:int) -> list[Any]:
-        column = getattr(self.model_type, "is_deleted")
-        fetched_objects = list(await session.execute(select(self.model_type).where(column == False).offset(offset).limit(limit)))
-        return fetched_objects
+        await session.refresh(db_obj)
+        return db_obj

@@ -2,27 +2,80 @@
 App wide response handler for standardizing API responses.
 This module provides a consistent response format across all API endpoints.
 """
-from http.client import responses
 
+from typing import Dict, Optional
+
+from core.config import config
 from fastapi.responses import JSONResponse
-from utils import token
-from schemas import BaseResponse
-from fastapi import Response
-from core import config
 
-class Responses():
-    async def success_response(self,response:Response = None, token: str = None) -> BaseResponse:
-        message = {"status_code":"200"}
-        if token is not None and response is not None:
-            response.set_cookie(key="access_token",
-                                value=token,
-                                httponly=True,
-                                secure=True,
-                                samesite="lax",
-                                max_age=config.ACCESS_TOKEN_EXPIRY_MINUTES*60)
-        return BaseResponse(message="Response send successfully", success=True)
 
-    async def failed_response(self) -> BaseResponse:
-        return BaseResponse(message="Response failed to be send", success=False)
+class Response(JSONResponse):
+    """
+    Custom response class that extends FastAPI's JSONResponse.
+    Provides standardized response format for all API responses.
+    """
 
-response_func = Responses()
+    def __init__(self, content: Dict, status_code: int) -> None:
+        """
+        Initialize Response object with content and status code
+        Args:
+            content: Dictionary containing response data
+            status_code: HTTP status code for the response
+        """
+        super().__init__(content, status_code)
+
+    @staticmethod
+    def success(
+        *,
+        message: str,
+        status_code: int = 200,
+        body: Optional[Dict] = None,
+        cookies: Optional[Dict] = None
+    ) -> "Response":
+        """
+        Create a success response with standardized format.
+        Args:
+            message: Success message to be included in response.
+            status_code: HTTP status code (defaults to 200).
+            body: Optional dictionary containing additional response data.
+            cookies: Optional dictionary containing application cookies data.
+        Returns:
+            Response object with success status and formatted content.
+        """
+        response = Response(
+            status_code=status_code,
+            content={
+                "success": True,
+                "message": message,
+                "details": body if body else None,
+            },
+        )
+        if cookies:
+            for key, value in cookies.items():
+                response.set_cookie(
+                    key=key,
+                    value=value,
+                    httponly=True,
+                    secure=True,
+                    samesite="lax",
+                )
+        return response
+
+    @staticmethod
+    def error(*, status_code: int, message: str) -> "Response":
+        """
+        Create an error response with standardized format.
+        Args:
+            status_code: HTTP status code.
+            message: Error message to be included in response.
+        Returns:
+            Response object with error status and message.
+        """
+        return Response(
+            status_code=status_code,
+            content={
+                "success": False,
+                "message": message,
+                "details": None,
+            },
+        )
